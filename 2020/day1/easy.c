@@ -32,7 +32,7 @@ int is_smaller(const void* x, const void* y)
 
 int main()
 {
-    char line[4];
+    char line[5] = { 0 };
     
     FILE* file = fopen("input.txt", "r");
     if (errno != 0)  // use errno.h
@@ -46,7 +46,7 @@ int main()
         if (n == 0) continue;
 
         list_push(lst, n);
-        *(int*)line = 0;
+        memset(line, 0, 5);
     }
 
     qsort(lst->numbers, lst->len, sizeof(int), is_smaller);
@@ -57,15 +57,9 @@ int main()
     while (sum != 2020)
     {
         sum = lst->numbers[min] + lst->numbers[max];
-        if (sum > 2020)
-            min++;
-        else if (sum < 2020) {
-            max--;
-        }
+        if (sum > 2020 && min++ == lst->len-1) exit(1);
+        else if (sum < 2020 && max-- == 1) exit(1);
 
-        if (min == lst->len || max == 0)  // prevent memory corruption
-            exit(1);
-
-        printf("%d + %d = %d\n", lst->numbers[min], lst->numbers[max], sum);
+        printf("%d + %d = %d (mult %d)\n", lst->numbers[min], lst->numbers[max], sum, lst->numbers[min] * lst->numbers[max]);
     }
 }
