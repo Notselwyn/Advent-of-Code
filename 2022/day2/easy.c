@@ -30,7 +30,7 @@ int main()
         int outcome = (3 + p1 - p2) % 3;
         
         // round score + move score
-        score += ((outcome%4*2)%3+1)%3*3 + line[2]-87; 
+        score += ((outcome*2)%3+1)%3*3 + p2; 
 
         printf("%s = %d (%d)\n", line, score-oscore, score);
     }
