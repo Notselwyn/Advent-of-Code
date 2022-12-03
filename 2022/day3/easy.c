@@ -29,12 +29,12 @@ int main()
         unsigned long comp1 = 0;
         rucksack[strlen(rucksack)-1] = '\0';
 
-        int size_half = strlen(rucksack)/2;
+        int rucksack_len = strlen(rucksack);
         bool found = false;
-        for (int i=0; i<size_half*2 && !found; i++)
+        for (int i=0; i<rucksack_len && !found; i++)
         {
             unsigned long encoded = pow(2, rucksack[i]-65);
-            if (i < size_half)
+            if (i < rucksack_len/2)
                 comp1 |= encoded;
             else if (comp1 & encoded) {
                 found = true;
@@ -47,6 +47,6 @@ int main()
             }
         }
     }
-    // 6437 < N < 8385 
+    
     printf("sum: %d\n", sum);
 }
