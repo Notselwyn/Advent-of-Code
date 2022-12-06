@@ -41,7 +41,7 @@ stack* stack_reverse(stack* stck)
     return stck;
 }
 
-stack* stack_move(stack* origin, stack* new, int amount)
+stack* stack_move(stack* origin, stack* new, const unsigned int amount)
 {
     if (origin->len < amount)
         return NULL;
@@ -60,6 +60,12 @@ stack* stack_move(stack* origin, stack* new, int amount)
 int main()
 {
     FILE* file = fopen("input.txt", "r");
+    if (file == NULL)
+    {
+        puts("ERR: fopen()");
+        exit(1);
+    }
+
     char buf[128];
     stack* stacks[9] = { 0 };
     unsigned char is_parsing = 1;
