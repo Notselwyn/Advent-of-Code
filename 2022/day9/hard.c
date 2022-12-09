@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BODY_LEN 5
+
 const unsigned char HEAD_UP = 1;
 const unsigned char HEAD_RIGHT = 2;
 const unsigned char HEAD_DOWN = 4;
@@ -40,6 +42,7 @@ typedef struct {
 
 history* history_add(history* hst, int* position)
 {
+    // keep everything unique
     for (int i=0; i < hst->len; i++)
         if (!memcmp(hst->positions[i], position, 8))
             return NULL;
@@ -63,17 +66,17 @@ history* history_add(history* hst, int* position)
 }
 
 
-unsigned int* dist(int* tail, int* head)
+unsigned int* dist(const int* head, const int* tail)
 {
     unsigned int* dist = malloc(2 * sizeof(int)); // y, x
-    dist[0] = abs(tail[0]-head[0]);
-    dist[1] = abs(tail[1]-head[1]);
+    dist[0] = abs(head[0]-tail[0]);
+    dist[1] = abs(head[1]-tail[1]);
 
     return dist;
 }
 
 
-void tick(int* tail, int* head, unsigned char steps_dir)
+void tick_head(int* head, unsigned char steps_dir)
 {
     if (steps_dir == HEAD_UP)
         head[0]++;
@@ -87,35 +90,43 @@ void tick(int* tail, int* head, unsigned char steps_dir)
         puts("ERR @ tick(): steps_dir invalid");
         exit(1);
     }
+}
 
-    unsigned int* dist_th = dist(tail, head);
+
+void tick_body(const int* head, int* tail, unsigned char steps_dir)
+{
+    unsigned int* dist_th = dist(head, tail);
     if (dist_th[0] > 2 || dist_th[1] > 2)
     {
         printf("ERR @ tick(): dist too big (dy: %d, dx: %d)\n", dist_th[0], dist_th[1]);
         exit(1);
     }
 
-    if ((steps_dir == HEAD_UP || steps_dir == HEAD_DOWN) && dist_th[0] == 2) 
+    if (dist_th[0] == 2) 
     {
-        tail[1] = head[1];
-        if (steps_dir == HEAD_UP)
-            tail[0] = head[0]-1;
-        else
-            tail[0] = head[0]+1;
-    } else if ((steps_dir == HEAD_LEFT || steps_dir == HEAD_RIGHT) && dist_th[1] == 2) {
-        tail[0] = head[0];
-        if (steps_dir == HEAD_LEFT)
-            tail[1] = head[1]+1;
-        else
-            tail[1] = head[1]-1;
+        if (steps_dir == HEAD_UP || steps_dir == HEAD_DOWN) 
+        {
+            tail[0] = steps_dir == HEAD_UP ? head[0]-1 : head[0]+1;
+            tail[1] = head[1];
+        } else {
+            tail[1] = steps_dir == HEAD_LEFT ? tail[1]-1 : tail[1]+1;
+            tail[0] = head[0] > tail[0] ? tail[0]+1 : tail[0]-1;
+        }
+    } else if (dist_th[1] == 2) {
+        if (steps_dir == HEAD_LEFT || steps_dir == HEAD_RIGHT)
+        { 
+            tail[0] = head[0];
+            tail[1] = steps_dir == HEAD_LEFT ? head[1]+1 : head[1]-1;
+        } else {
+            tail[1] = head[1] > tail[1] ? tail[1]+1 : tail[1]-1;
+            tail[0] = steps_dir == HEAD_UP ? tail[0]+1 : tail[0]-1;
+        }
     }
-    
-    printf("tail: (y: %d, x: %d), head: (y: %d, x: %d)\n", tail[0], tail[1], head[0], head[1]);
 }
 
 int main()
 {
-    FILE* file = fopen("input.txt", "r");
+    FILE* file = fopen("input2.txt", "r");
     if (!file)
     {
         puts("ERR: fopen()");
@@ -123,10 +134,11 @@ int main()
     }
 
     char buf[128];
-    int* head = calloc(sizeof(int), 2);
-    int* tail = calloc(sizeof(int), 2);
+    int** rope = malloc(10 * sizeof(int*)); // H, 1, 2, ..., 9
+    for (int i=0; i < 10; i++)
+        rope[i] = calloc(sizeof(int), 2);
+    
     history* hst = calloc(sizeof(history), 1);
-
     while (fgets(buf, sizeof(buf), file))
     {
         char steps_dir = '\0';
@@ -150,9 +162,20 @@ int main()
 
         for (int i=0; i < steps_amount; i++)
         {
-            tick(tail, head, steps_dir);
-            history_add(hst, tail);
+            tick_head(rope[0], steps_dir);
+            printf("T%02x head: (y: %d, x: %d), ", steps_dir, rope[0][0], rope[0][1]);
+            for (int j=1; j < BODY_LEN; j++)
+            {
+                tick_body(rope[j-1], rope[j], steps_dir);
+                printf("%d (y: %d, x: %d), ", j, rope[j][0], rope[j][1]);   
+            }
+            tick_body(rope[BODY_LEN-1], rope[BODY_LEN], steps_dir);
+            printf("tail: (y: %d, x: %d)\n", rope[BODY_LEN][0], rope[BODY_LEN][1]);   
+            
+            history_add(hst, rope[BODY_LEN]);
         }
+
+        puts("----------");
     }
 
     printf("positions: %d\n", hst->len);
