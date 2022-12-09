@@ -75,33 +75,6 @@ unsigned int* dist(const int* head, const int* tail)
     return dist;
 }
 
-int is_diagonal(const int* head, const int* tail)
-{
-    return !(head[0] == tail[0] || head[1] == tail[1]);
-}
-
-
-void tick_body(const int* head, int* tail, unsigned char steps_dir)
-{
-    unsigned int* dist_th = dist(head, tail);
-    unsigned int dist_sum = dist_th[0] + dist_th[1];
-    
-    if (dist_th[0] > 2 || dist_th[1] > 2)
-    {
-        printf("ERR @ tick(): dist too big (dy: %u, dx: %u)\n", dist_th[0], dist_th[1]);
-        exit(1);
-    }
-
-    if (dist_sum > (dist_th[0] && dist_th[1] ? 2 : 1))  // check if the distance criteria is met
-    {
-        if (dist_th[0] >= 1)
-            tail[0] = head[0] > tail[0] ? tail[0]+1 : tail[0]-1;
-
-        if (dist_th[1] >= 1)
-            tail[1] = head[1] > tail[1] ? tail[1]+1 : tail[1]-1;
-    }
-}
-
 
 void tick_head(int* head, unsigned char steps_dir)
 {
@@ -119,9 +92,28 @@ void tick_head(int* head, unsigned char steps_dir)
     }
 }
 
+
+void tick_body(const int* head, int* tail, unsigned char steps_dir)
+{
+    unsigned int* dist_th = dist(head, tail);
+    if (dist_th[0] > 2 || dist_th[1] > 2)
+    {
+        printf("ERR @ tick(): dist too big (dy: %u, dx: %u)\n", dist_th[0], dist_th[1]);
+        exit(1);
+    }
+
+    if (dist_th[0] == 2) {  // dy == 2
+        tail[0] = head[0] > tail[0] ? head[0]-1 : head[0]+1;
+    } 
+    
+    if (dist_th[1] == 2) { // dx == 2
+        tail[1] = head[1] > tail[1] ? head[1]-1 : head[1]+1;
+    }
+}
+
 int main()
 {
-    FILE* file = fopen("input.txt", "r");
+    FILE* file = fopen("input3.txt", "r");
     if (!file)
     {
         puts("ERR: fopen()");
@@ -173,7 +165,5 @@ int main()
         puts("----------");
     }
 
-
-    // 2416 < N < 2592
     printf("positions: %d\n", hst->len);
 }
