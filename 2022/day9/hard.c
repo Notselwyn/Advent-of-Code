@@ -75,12 +75,6 @@ unsigned int* dist(const int* head, const int* tail)
     return dist;
 }
 
-int is_diagonal(const int* head, const int* tail)
-{
-    return !(head[0] == tail[0] || head[1] == tail[1]);
-}
-
-
 void tick_body(const int* head, int* tail, unsigned char steps_dir)
 {
     unsigned int* dist_th = dist(head, tail);
