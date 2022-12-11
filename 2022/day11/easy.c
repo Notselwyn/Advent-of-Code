@@ -243,8 +243,6 @@ int main()
         printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
     }
 
-    // too high: 50844
-
     printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
 }
 
