@@ -18,8 +18,6 @@
 #include <limits.h>
 
 
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"  // stop gcc from whining about polymorphism xd
-
 // dynamic array
 typedef struct {
     void** content;
@@ -84,8 +82,8 @@ dynarr* dynarr_append(dynarr* dnar, void* entry)
 }
 
 
-#define DYNARR_INDEX(dnar, index) ((dynarr*)dnar)->content[index]
-#define DYNARR_LEN(dnar) ((dynarr*)dnar)->nmemb
+#define DYNARR_INDEX(dnar, index) (((dynarr*)dnar)->content[index])
+#define DYNARR_LEN(dnar) (((dynarr*)dnar)->nmemb)
 
 
 monkey* monkey_init()
@@ -99,52 +97,54 @@ monkey* monkey_init()
 
 void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
 {
-    printf("0x%x->", item);
-    mnk->item_counter++;
-    
-    int arg1 = mnk->op.arg1 == ARG_OLD_VALUE ? item : mnk->op.arg1;
-    int arg2 = mnk->op.arg2 == ARG_OLD_VALUE ? item : mnk->op.arg2;
-    int worry;
-    switch (mnk->op.operator) {
-        case '+':
-            worry = arg1 + arg2;
-            break;
-        case '-':
-            worry = arg1 - arg2;
-            break;
-        case '*':
-            worry = arg1 * arg2;
-            break;
-        case '/':
-            worry = arg1 / arg2;  // this should get floored to int
-            break;
-        default:
-            puts("ERR: invalid operator");
-            exit(1);
-    }
+    while (round < 20)
+    {
+        printf("%d->", item);
+        mnk->item_counter++;
         
-    worry /= 3;  // this should get floored to int as well
-    
+        int arg1 = mnk->op.arg1 == ARG_OLD_VALUE ? item : mnk->op.arg1;
+        int arg2 = mnk->op.arg2 == ARG_OLD_VALUE ? item : mnk->op.arg2;
+        int worry;
+        switch (mnk->op.operator) {
+            case '+':
+                worry = arg1 + arg2;
+                break;
+            case '-':
+                worry = arg1 - arg2;
+                break;
+            case '*':
+                worry = arg1 * arg2;
+                break;
+            case '/':
+                worry = arg1 / arg2;  // this should get floored to int
+                break;
+            default:
+                puts("ERR: invalid operator");
+                exit(1);
+        }
+            
+        worry /= 3;  // this should get floored to int as well
+        
+        monkey* mnk_next;
+        if (worry % mnk->test.arg == 0)  // successfull test result
+            mnk_next = (*tribe)[mnk->test.success];
+        else
+            mnk_next = (*tribe)[mnk->test.failure];
 
-    monkey* mnk_next;
-    if (worry % mnk->test.arg == 0)  // successfull test result
-        mnk_next = (*tribe)[mnk->test.success];
-    else
-        mnk_next = (*tribe)[mnk->test.failure];
+        // only increment round when all monkeys passed
+        if (mnk_next->index < mnk->index)
+            round++;
 
-    // only increment round when all monkeys passed
-    if (mnk_next->index < mnk->index)
-        round++;
-
-    if (round < 20)
-        monkey_inspect(tribe, mnk_next, worry, round);
+        mnk = mnk_next;
+        item = worry;
+    }
 }
 
 
 monkey*** file_parse(FILE* file)
 {
     char buf[128];
-    monkey*** tribe = dynarr_init(sizeof(monkey*)); // lmao
+    monkey*** tribe = (monkey***)dynarr_init(sizeof(monkey*)); // lmao
     
     int i=0;
     monkey* mnk = NULL;
@@ -154,7 +154,7 @@ monkey*** file_parse(FILE* file)
         {
         case 0:
             if (i != 0)  // i % 7 == 0 && i != 0
-                dynarr_append(tribe, mnk);
+                dynarr_append((dynarr*)tribe, mnk);
 
             printf("tribe size: %d\n", ((dynarr*)tribe)->nmemb);
             mnk = monkey_init();
@@ -168,7 +168,7 @@ monkey*** file_parse(FILE* file)
                     // since the minimal malloc size is 24
                     int* value = malloc(sizeof(int));
                     *value = strtol(buf+i, NULL, 10);
-                    dynarr_append(mnk, value);
+                    dynarr_append((dynarr*)mnk, value);
                 }
             }
             break;
@@ -202,7 +202,7 @@ monkey*** file_parse(FILE* file)
     }
    
     // for the last monke 
-    dynarr_append(tribe, mnk);
+    dynarr_append((dynarr*)tribe, mnk);
     return tribe;
 }
 
