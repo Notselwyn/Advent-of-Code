@@ -21,9 +21,9 @@
 // dynamic array
 typedef struct dynarr_t {
     void** content;
-    unsigned int nmemb;
-    unsigned int typesize;
-    unsigned int capacity;
+    size_t nmemb;
+    size_t typesize;
+    size_t capacity;
 } dynarr_t;
 
 
@@ -164,7 +164,7 @@ monkey_t*** file_parse(FILE* file)
             if (i != 0)  // i % 7 == 0 && i != 0
                 dynarr_append((dynarr_t*)tribe, mnk);
 
-            printf("tribe size: %d\n", ((dynarr_t*)tribe)->nmemb);
+            printf("tribe size: %ld\n", ((dynarr_t*)tribe)->nmemb);
             mnk = monkey_init();
             mnk->index = i / 7;
             break;
@@ -229,7 +229,7 @@ int main()
     {
         monkey_t* mnk = (*tribe)[i];
        
-        printf("===== MONKEY %d (%d items) =====\n", i, DYNARR_LEN(mnk));
+        printf("===== MONKEY %d (%ld items) =====\n", i, DYNARR_LEN(mnk));
         for (int j=0; j < DYNARR_LEN(mnk); j++)
         {
             printf("----- ITEM %d (%d value) -----\n", j, *(int*)DYNARR_INDEX(mnk, j));
