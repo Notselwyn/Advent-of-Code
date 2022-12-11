@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"  // stop gcc from whining about polymorphism xd
 
@@ -36,7 +38,7 @@ typedef struct {
 
 
 // max positive integer
-int ARG_OLD_VALUE = 0x7fffffff;
+int ARG_OLD_VALUE = INT_MAX;
 
 // e.g. new = old * 19, where * is op. and 19 is op. arg2
 typedef struct {
