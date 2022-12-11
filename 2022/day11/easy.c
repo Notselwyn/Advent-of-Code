@@ -243,8 +243,6 @@ int main()
         }
         printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
     }
-
-    printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
 }
 
 
