@@ -19,52 +19,56 @@
 
 
 // dynamic array
-typedef struct {
+typedef struct dynarr_t {
     void** content;
     unsigned int nmemb;
     unsigned int typesize;
     unsigned int capacity;
-} dynarr;
+} dynarr_t;
 
 
 // all test cases are divisable
-typedef struct {
+struct testcase {
     int arg;
     unsigned int success;
     unsigned int failure;
-} testcase;
+};
 
 
 // max positive integer
 int ARG_OLD_VALUE = INT_MAX;
 
 // e.g. new = old * 19, where * is op. and 19 is op. arg2
-typedef struct {
+struct operation {
     char operator;
     int arg1;
     int arg2;
-} operation;
+};
 
 
-typedef struct {
-    dynarr items;  // integers. (dynarr for polymorphism)
+typedef struct monkey_t {
+    dynarr_t items;  // integers. (dynarr for polymorphism)
     unsigned int item_counter;
     unsigned int index;
-    operation op;
-    testcase test;
-} monkey; 
+    struct operation op;
+    struct testcase test;
+} monkey_t; 
 
 
-dynarr* dynarr_init(unsigned int typesize)
+dynarr_t* dynarr_init(unsigned int typesize)
 {
-    dynarr* dnar = calloc(sizeof(dynarr), 1);
+    dynarr_t* dnar;
+   
+    dnar = malloc(sizeof(dynarr_t));
+    memset(dnar, '\0', typesize);
+
     dnar->typesize = typesize;
     
     return dnar;
 }
 
 
-dynarr* dynarr_append(dynarr* dnar, void* entry)
+dynarr_t* dynarr_append(dynarr_t* dnar, void* entry)
 {
     if (dnar->nmemb == dnar->capacity)
     {
@@ -82,20 +86,24 @@ dynarr* dynarr_append(dynarr* dnar, void* entry)
 }
 
 
-#define DYNARR_INDEX(dnar, index) (((dynarr*)dnar)->content[index])
-#define DYNARR_LEN(dnar) (((dynarr*)dnar)->nmemb)
+#define DYNARR_INDEX(dnar, index) (((dynarr_t*)dnar)->content[index])
+#define DYNARR_LEN(dnar) (((dynarr_t*)dnar)->nmemb)
 
 
-monkey* monkey_init()
+monkey_t* monkey_init()
 {
-    monkey* mnk = calloc(sizeof(monkey), 1);
+    monkey_t* mnk;
+   
+    mnk = malloc(sizeof(monkey_t));
+    memset(mnk, '\0', sizeof(monkey_t));
+
     mnk->items.typesize = sizeof(int*);
 
     return mnk;
 }
 
 
-void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
+void monkey_inspect(monkey_t*** tribe, monkey_t* mnk, int item, int round)
 {
     while (round < 20)
     {
@@ -125,7 +133,7 @@ void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
             
         worry /= 3;  // this should get floored to int as well
         
-        monkey* mnk_next;
+        monkey_t* mnk_next;
         if (worry % mnk->test.arg == 0)  // successfull test result
             mnk_next = (*tribe)[mnk->test.success];
         else
@@ -141,22 +149,22 @@ void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
 }
 
 
-monkey*** file_parse(FILE* file)
+monkey_t*** file_parse(FILE* file)
 {
     char buf[128];
-    monkey*** tribe = (monkey***)dynarr_init(sizeof(monkey*)); // lmao
+    monkey_t*** tribe = (monkey_t***)dynarr_init(sizeof(monkey_t*)); // lmao
     
     int i=0;
-    monkey* mnk = NULL;
+    monkey_t* mnk = NULL;
     while (fgets(buf, sizeof(buf), file))
     {
         switch (i % 7)
         {
         case 0:
             if (i != 0)  // i % 7 == 0 && i != 0
-                dynarr_append((dynarr*)tribe, mnk);
+                dynarr_append((dynarr_t*)tribe, mnk);
 
-            printf("tribe size: %d\n", ((dynarr*)tribe)->nmemb);
+            printf("tribe size: %d\n", ((dynarr_t*)tribe)->nmemb);
             mnk = monkey_init();
             mnk->index = i / 7;
             break;
@@ -168,7 +176,7 @@ monkey*** file_parse(FILE* file)
                     // since the minimal malloc size is 24
                     int* value = malloc(sizeof(int));
                     *value = strtol(buf+i, NULL, 10);
-                    dynarr_append((dynarr*)mnk, value);
+                    dynarr_append((dynarr_t*)mnk, value);
                 }
             }
             break;
@@ -202,7 +210,7 @@ monkey*** file_parse(FILE* file)
     }
    
     // for the last monke 
-    dynarr_append((dynarr*)tribe, mnk);
+    dynarr_append((dynarr_t*)tribe, mnk);
     return tribe;
 }
 
@@ -216,10 +224,10 @@ int main()
         exit(1);
     }
 
-    monkey*** tribe = file_parse(file);
+    monkey_t*** tribe = file_parse(file);
     for (int i=0; i < DYNARR_LEN(tribe); i++)
     {
-        monkey* mnk = (*tribe)[i];
+        monkey_t* mnk = (*tribe)[i];
        
         printf("===== MONKEY %d (%d items) =====\n", i, DYNARR_LEN(mnk));
         for (int j=0; j < DYNARR_LEN(mnk); j++)
