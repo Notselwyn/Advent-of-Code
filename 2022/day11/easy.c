@@ -66,15 +66,6 @@ dynarr* dynarr_init(unsigned int typesize)
 }
 
 
-monkey* monkey_init()
-{
-    monkey* mnk = calloc(sizeof(monkey), 1);
-    mnk->items.typesize = sizeof(int*);
-
-    return mnk;
-}
-
-
 dynarr* dynarr_append(dynarr* dnar, void* entry)
 {
     if (dnar->nmemb == dnar->capacity)
@@ -95,7 +86,15 @@ dynarr* dynarr_append(dynarr* dnar, void* entry)
 
 #define DYNARR_INDEX(dnar, index) ((dynarr*)dnar)->content[index]
 #define DYNARR_LEN(dnar) ((dynarr*)dnar)->nmemb
-#define DYNARR_CAPACITY(dnar) ((dynarr*)dnar)->capacity
+
+
+monkey* monkey_init()
+{
+    monkey* mnk = calloc(sizeof(monkey), 1);
+    mnk->items.typesize = sizeof(int*);
+
+    return mnk;
+}
 
 
 void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
