@@ -1,2 +1,13 @@
+# this basically prevents binaries from getting committed
+
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
+
 *.swp
 .gdb_history
