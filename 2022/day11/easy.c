@@ -75,7 +75,6 @@ monkey* monkey_init()
 
 dynarr* dynarr_append(dynarr* dnar, void* entry)
 {
-    //printf("adding %p to monkey %p\n", entry, dnar);
     if (dnar->nmemb == dnar->capacity)
     {
         dnar->capacity = dnar->capacity ? dnar->capacity * 2 : 8;
@@ -145,59 +144,8 @@ void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
 }
 
 
-monkey* monkey_inspect_all(monkey*** tribe, monkey* mnk)
+monkey*** file_parse(FILE* file)
 {
-    // iterate over all items
-    printf("[ ");
-    for (int k=0; k < DYNARR_LEN(mnk); k++)
-    {
-        int old_value = *(int*)DYNARR_INDEX(mnk, k);
-        printf("%d:", old_value);
-        
-        int arg1 = mnk->op.arg1 == ARG_OLD_VALUE ? old_value : mnk->op.arg1;
-        int arg2 = mnk->op.arg2 == ARG_OLD_VALUE ? old_value : mnk->op.arg2;
-        int* worry = malloc(sizeof(int));
-        switch (mnk->op.operator) {
-            case '+':
-                *worry = arg1 + arg2;
-                break;
-            case '-':
-                *worry = arg1 - arg2;
-                break;
-            case '*':
-                *worry = arg1 * arg2;
-                break;
-            case '/':
-                *worry = arg1 / arg2;  // this should get floored to int
-                break;
-            default:
-                puts("ERR: invalid operator");
-                exit(1);
-        }
-        
-        *worry /= 3;  // this should get floored to int as well
-        monkey* mnk_next;
-        if (*worry % mnk->test.arg == 0) // successfull result
-            mnk_next = (*tribe)[mnk->test.success];
-        else
-            mnk_next = (*tribe)[mnk->test.failure];
-        dynarr_append(mnk_next, worry);
-        printf("%d ", *worry);
-    }
-    puts("]");
-    
-    return mnk;
-}
-
-int main()
-{
-    FILE* file = fopen("input2.txt", "r");
-    if (!file)
-    {
-        puts("ERR: fopen()");
-        exit(1);
-    }
-
     char buf[128];
     monkey*** tribe = dynarr_init(sizeof(monkey*)); // lmao
     int i=0;
@@ -207,50 +155,45 @@ int main()
     {
         switch (i % 7)
         {
-            case 0:
-                if (i != 0)  // i % 7 == 0 && i != 0
-                    dynarr_append(tribe, mnk);
+        case 0:
+            if (i != 0)  // i % 7 == 0 && i != 0
+                dynarr_append(tribe, mnk);
 
-                printf("dynarr size: %d\n", ((dynarr*)tribe)->nmemb);
-                mnk = monkey_init();
-                mnk->index = i / 7;
-                break;
-            case 1:  // starting items
-                int buflen = strlen(buf);
-                int start = 0;
-                for (int i=16; i < buflen; i++)
-                {
-                    if (buf[i] == ' ') {
-                        start = i+1;
-                    } else if (buf[i] == ',' || buf[i] == '\n') {
-                        // using malloc for 4 bytes is inefficient
-                        // since the minimal malloc size is 24
-                        int* value = malloc(sizeof(int));
-                        buf[i] = 0;
-                        sscanf(buf+start, "%d", value);
-                        dynarr_append(mnk, value);
-                    }
+            printf("dynarr size: %d\n", ((dynarr*)tribe)->nmemb);
+            mnk = monkey_init();
+            mnk->index = i / 7;
+            break;
+        case 1:  // starting items
+            for (int i=16; i < strlen(buf); i++)
+            {
+                if (buf[i] == ' ') {
+                    // using malloc for 4 bytes is inefficient
+                    // since the minimal malloc size is 24
+                    int* value = malloc(sizeof(int));
+                    *value = strtol(buf+i, NULL, 10);
+                    dynarr_append(mnk, value);
                 }
-                break;
-            case 2:
-                if (!memcmp(buf+25, "old", 3))
-                {
-                    sscanf(buf, "  Operation: new = old %c", &mnk->op.operator);
-                    mnk->op.arg2 = ARG_OLD_VALUE;
-                } else {
-                    sscanf(buf, "  Operation: new = old %c %d", &mnk->op.operator, &mnk->op.arg2);
-                }
-                mnk->op.arg1 = ARG_OLD_VALUE;
-                break;
-            case 3:
-                sscanf(buf, "  Test: divisible by %d", &mnk->test.arg);
-                break;
-            case 4:
-                sscanf(buf, "    If true: throw to monkey %d", &mnk->test.success);
-                break;
-            case 5:
-                sscanf(buf, "    If false: throw to monkey %d", &mnk->test.failure);
-                break;
+            }
+            break;
+        case 2:
+            if (!memcmp(buf+25, "old", 3))
+            {
+                sscanf(buf, "  Operation: new = old %c", &mnk->op.operator);
+                mnk->op.arg2 = ARG_OLD_VALUE;
+            } else {
+                sscanf(buf, "  Operation: new = old %c %d", &mnk->op.operator, &mnk->op.arg2);
+            }
+            mnk->op.arg1 = ARG_OLD_VALUE;
+            break;
+        case 3:
+            sscanf(buf, "  Test: divisible by %d", &mnk->test.arg);
+            break;
+        case 4:
+            sscanf(buf, "    If true: throw to monkey %d", &mnk->test.success);
+            break;
+        case 5:
+            sscanf(buf, "    If false: throw to monkey %d", &mnk->test.failure);
+            break;
         }
         i++;
     }
@@ -263,10 +206,22 @@ int main()
    
     // for the last monke 
     dynarr_append(tribe, mnk);
-    
+    return tribe;
+}
+
+
+int main()
+{
+    FILE* file = fopen("input2.txt", "r");
+    if (!file)
+    {
+        puts("ERR: fopen()");
+        exit(1);
+    }
+
+    monkey*** tribe = file_parse(file);
     for (int j=0; j < DYNARR_LEN(tribe); j++)
     {
-
         monkey* mnk = (*tribe)[j];
        
         printf("===== MONKEY %d (%d) =====\n", j, DYNARR_LEN(mnk));
@@ -279,10 +234,7 @@ int main()
     }
 
     for (int i=0; i < DYNARR_LEN(tribe); i++)
-    {
         printf("monkey %d: %d items\n", i, (*tribe)[i]->item_counter);
-
-    }
 }
 
 
