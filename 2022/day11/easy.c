@@ -67,7 +67,7 @@ dynarr* dynarr_init(unsigned int typesize)
 monkey* monkey_init()
 {
     monkey* mnk = calloc(sizeof(monkey), 1);
-    mnk->items.typesize = sizeof(int);
+    mnk->items.typesize = sizeof(int*);
 
     return mnk;
 }
@@ -86,11 +86,6 @@ dynarr* dynarr_append(dynarr* dnar, void* entry)
         }
     }
 
-    //void* content_entry = dnar->content + dnar->nmemb * dnar->typesize;
-    //printf("copying monke to %p (size: %u)\n", content_entry, dnar->typesize);
-    //memcpy(content_entry, entry, dnar->typesize);
-    
-
     dnar->content[dnar->nmemb++] = entry;
     return dnar;
 }
@@ -98,11 +93,12 @@ dynarr* dynarr_append(dynarr* dnar, void* entry)
 
 #define DYNARR_INDEX(dnar, index) ((dynarr*)dnar)->content[index]
 #define DYNARR_LEN(dnar) ((dynarr*)dnar)->nmemb
+#define DYNARR_CAPACITY(dnar) ((dynarr*)dnar)->capacity
 
 
 void monkey_inspect(monkey*** tribe, monkey* mnk, int item, int round)
 {
-    printf("%d->", item);
+    printf("0x%x->", item);
     mnk->item_counter++;
     
     int arg1 = mnk->op.arg1 == ARG_OLD_VALUE ? item : mnk->op.arg1;
@@ -148,8 +144,8 @@ monkey*** file_parse(FILE* file)
 {
     char buf[128];
     monkey*** tribe = dynarr_init(sizeof(monkey*)); // lmao
-    int i=0;
     
+    int i=0;
     monkey* mnk = NULL;
     while (fgets(buf, sizeof(buf), file))
     {
@@ -159,7 +155,7 @@ monkey*** file_parse(FILE* file)
             if (i != 0)  // i % 7 == 0 && i != 0
                 dynarr_append(tribe, mnk);
 
-            printf("dynarr size: %d\n", ((dynarr*)tribe)->nmemb);
+            printf("tribe size: %d\n", ((dynarr*)tribe)->nmemb);
             mnk = monkey_init();
             mnk->index = i / 7;
             break;
@@ -212,7 +208,7 @@ monkey*** file_parse(FILE* file)
 
 int main()
 {
-    FILE* file = fopen("input2.txt", "r");
+    FILE* file = fopen("input3.txt", "r");
     if (!file)
     {
         puts("ERR: fopen()");
@@ -220,21 +216,36 @@ int main()
     }
 
     monkey*** tribe = file_parse(file);
-    for (int j=0; j < DYNARR_LEN(tribe); j++)
+    for (int i=0; i < DYNARR_LEN(tribe); i++)
     {
-        monkey* mnk = (*tribe)[j];
+        monkey* mnk = (*tribe)[i];
        
-        printf("===== MONKEY %d (%d) =====\n", j, DYNARR_LEN(mnk));
-        for (int k=0; k < DYNARR_LEN(mnk); k++)
+        printf("===== MONKEY %d (%d items) =====\n", i, DYNARR_LEN(mnk));
+        for (int j=0; j < DYNARR_LEN(mnk); j++)
         {
-            printf("----- ITEM %d -----\n", k);
-            monkey_inspect(tribe, mnk, *(int*)DYNARR_INDEX(mnk, k), 0);
+            printf("----- ITEM %d (%d value) -----\n", j, *(int*)DYNARR_INDEX(mnk, j));
+            monkey_inspect(tribe, mnk, *(int*)DYNARR_INDEX(mnk, j), 0);
             puts("");
         }
     }
 
+    unsigned int best = 0;
+    unsigned int best2nd = 0;
     for (int i=0; i < DYNARR_LEN(tribe); i++)
-        printf("monkey %d: %d items\n", i, (*tribe)[i]->item_counter);
+    {
+        int items = (*tribe)[i]->item_counter;
+        if (items > best) {
+            best2nd = best;
+            best = items;
+        } else if (items > best2nd) {
+            best2nd = items;
+        }
+        printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
+    }
+
+    // too high: 50844
+
+    printf("monkey business: %d * %d = %d\n", best, best2nd, best * best2nd);
 }
 
 
