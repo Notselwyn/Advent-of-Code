@@ -16,16 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-
-
-// dynamic array
-typedef struct dynarr_t {
-    void** content;
-    size_t nmemb;
-    size_t typesize;
-    size_t capacity;
-} dynarr_t;
-
+#include "include/dynarr.h"
 
 // all test cases are divisable
 struct testcase {
@@ -59,41 +50,6 @@ typedef struct tribe_t {
     dynarr_t monkeys;
     unsigned int lcm;
 } tribe_t;
-
-
-dynarr_t* dynarr_init(unsigned int typesize)
-{
-    dynarr_t* dnar;
-   
-    dnar = malloc(sizeof(dynarr_t));
-    memset(dnar, '\0', typesize);
-
-    dnar->typesize = typesize;
-    
-    return dnar;
-}
-
-
-dynarr_t* dynarr_append(dynarr_t* dnar, void* entry)
-{
-    if (dnar->nmemb == dnar->capacity)
-    {
-        dnar->capacity = dnar->capacity ? dnar->capacity * 2 : 8;
-        dnar->content = realloc(dnar->content, dnar->capacity * dnar->typesize);
-        if (!dnar->content)
-        {
-            puts("ERR: realloc failed");
-            exit(1);
-        }
-    }
-
-    dnar->content[dnar->nmemb++] = entry;
-    return dnar;
-}
-
-
-#define DYNARR_INDEX(dnar, index) (((dynarr_t*)dnar)->content[index])
-#define DYNARR_LEN(dnar) (((dynarr_t*)dnar)->nmemb)
 
 
 monkey_t* monkey_init()
@@ -298,8 +254,6 @@ int main()
 
         unsigned long mult = best * best2nd;
         printf("monkey business: %lu * %lu = %lu\n", best, best2nd, mult);
-
-        // 13240526250 is too high
     }
 }
 
